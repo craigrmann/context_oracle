@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+gunicorn
+chromadb
+networkx
+tree-sitter-language-pack
+openai>=1.40.0
+pydantic
+python-multipart
