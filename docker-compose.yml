@@ -1,20 +1,10 @@
 services:
   oracle:
     build: .
-    container_name: codebase-oracle
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
+    ports: ["8000:8000"]
     volumes:
       - oracle_index:/app/.oracle_index
+      - /path/to/your/actual/project:/project:ro   # ← your codebase
     environment:
-      - ORACLE_ROOT_DIR=/project   # mount your actual code below
-    # Optional: add API key later
-    # - ORACLE_API_KEY=your-secret-key
-
-  # Example: mount your actual project
-volumes:
-  oracle_index:
-
-# To run: docker compose up -d --build
-# Then: docker compose exec oracle codebase-oracle build   (or POST /build)
+      - ORACLE_ROOT_DIR=/project
+      - OPENAI_API_KEY=${OPENAI_API_KEY}   # add to your .env
