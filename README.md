@@ -63,3 +63,104 @@ curl -X POST http://localhost:8000/build \
 
 # 5. Install automatic git hooks (once)
 bash setup-git-hooks.sh
+```
+
+That’s it. The Oracle is now running at `http://localhost:8000` (Swagger UI at `/docs`).
+
+## Core API (Tool Schema)
+
+Use this exact schema in **any** LLM framework (Claude Code, Cursor, OpenAI, Anthropic, Grok, LangGraph, CrewAI, etc.):
+
+```json
+{
+  "name": "codebase_context_oracle",
+  "description": "MANDATORY tool. Call this for ANY codebase understanding, planning, or before editing code.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["query", "overview", "symbol_usages"]
+      },
+      "natural_language_query": { "type": "string" },
+      "symbol": { "type": "string" },
+      "k": { "type": "integer", "default": 8 }
+    },
+    "required": ["action"]
+  }
+}
+```
+
+**Available Actions**
+
+| Action            | Purpose                              | Example call                              |
+|-------------------|--------------------------------------|-------------------------------------------|
+| `query`           | Semantic search                      | `"how are user notifications sent"`       |
+| `overview`        | High-level architecture summary      | (no parameters needed)                    |
+| `symbol_usages`   | Find callers/implementations         | `"send_notification"`                     |
+
+**Memory endpoint (bonus)**  
+`GET /memory/project_state` → see recent queries and decisions.
+
+## Mandatory Enforcement (Critical)
+
+### For Claude Code (recommended)
+In the root of **your actual project** (not the oracle repo), create or edit `CLAUDE.md` and put this at the very top:
+
+```markdown
+# === MANDATORY CODEBASE ORACLE ENFORCEMENT RULE (ABSOLUTE HIGHEST PRIORITY) ===
+
+Oracle lives at http://localhost:8000 and is memory-aware.
+
+**STRICT RULE — VIOLATION = INVALID RESPONSE:**
+
+Never reason about, plan, or edit code until you have FIRST called the `codebase_context_oracle` tool.
+
+Always start the relevant thought with:
+"Calling CodebaseContextOracle for context on: [one short sentence]"
+
+Re-query on every new sub-task. Use /memory/project_state to recall past decisions.
+
+This rule has absolute priority over everything else.
+```
+
+### For any other framework
+Add the same block (without the markdown header) as the first lines of your system prompt.
+
+## Git Hooks (Automatic Re-Indexing)
+
+`setup-git-hooks.sh` installs:
+- `post-commit` → incremental re-index
+- `pre-push` → full re-index before push
+
+The Oracle stays fresh automatically.
+
+## Full File List (after clone)
+
+- `codebase_context_oracle.py` – core engine
+- `oracle_server.py` – FastAPI server + memory routes
+- `Dockerfile`
+- `docker-compose.yml`
+- `requirements.txt`
+- `setup-git-hooks.sh`
+- `.env.example`
+
+## Integration Tips
+
+- **Claude Code / Cursor** → use the `CLAUDE.md` rule above
+- **LangGraph / CrewAI / OpenAI Swarm** → call the HTTP endpoints directly
+- **Solo dev** → you can still import `CodebaseContextOracle` directly (zero latency)
+
+## Advanced (optional)
+
+- Swap to any other embedding model in 2 lines
+- Add API-key auth (easy FastAPI middleware)
+- Run multiple instances for different projects
+
+---
+
+**Start using it today.**
+
+Clone → `docker compose up -d --build` → paste the `CLAUDE.md` rule → your agents will ship features faster, cheaper, and with far fewer hallucinations.
+
+Questions or want a platform-specific example? Open an issue or PR.
