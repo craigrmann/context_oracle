@@ -1,4 +1,3 @@
-```markdown
 # CodebaseContextOracle
 
 **Efficient, mandatory codebase understanding for agentic coding workflows.**
